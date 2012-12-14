@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE beans PUBLIC '-//SPRING//DTD BEAN//EN' 'http://www.springframework.org/dtd/spring-beans.dtd'>
+<beans>
+  
+  <bean id="webscript.tsm.upload.upload.get"
+        class="tsm.updownbacked.controller.UploadGetController" parent="webscript">
+  </bean>
+  
+  <bean id="webscript.tsm.upload.upload.post"
+        class="tsm.updownbacked.controller.UploadPostController" parent="webscript">	
+		<property name="repository" ref="repositoryHelper"/>
+  </bean>
+  
+  <bean id="webscript.tsm.download.download.get" 
+        class="tsm.updownbacked.controller.DownloadGetController" parent="webscript">	
+  </bean>
+
+</beans>

@@ -20,7 +20,7 @@ public class Utility {
 	    	
 	    	mac = Mac.getInstance("HmacSHA256");
 		
-	    } catch (NoSuchAlgorithmException e1) {
+	    } catch (NoSuchAlgorithmException e1) { 
 			
 			e1.printStackTrace();
 		} 
@@ -43,6 +43,7 @@ public class Utility {
 
 	
 	public static String urlSafeBase64Encode(String s){		
+		
 		String result = null;
 		Base64 decoder = new Base64(true);
 	    byte[] decodedBytes = decoder.encode(s.getBytes());

@@ -2,7 +2,6 @@ package tsm.updownbacked.model;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.TimeZone;
 import java.util.TreeMap;
@@ -52,9 +51,11 @@ public class UploadPolicy extends Policy {
 		formatter.setTimeZone(TimeZone.getTimeZone("GMT"));
 		Date date = null;
 		try {
+		
 			date = (Date)formatter.parse(decodedPolicy.getValues().get("ExpiresAt"));
+		
 		} catch (ParseException e) {
-			// TODO Auto-generated catch block
+			
 			e.printStackTrace();
 		}
 		  

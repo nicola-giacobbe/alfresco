@@ -1,52 +1,105 @@
 package tsm.updownbacked.controller;
 
-public class DownloadGetController {
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import javax.servlet.ServletOutputStream;
+import org.springframework.extensions.webscripts.DeclarativeWebScript;
+import org.springframework.extensions.webscripts.WebScriptException;
+import org.springframework.extensions.webscripts.WebScriptRequest;
+import org.springframework.extensions.webscripts.WebScriptResponse;
+import tsm.updownbacked.model.DecodedPolicy;
+import tsm.updownbacked.model.DownloadPolicy;
+import tsm.updownbacked.model.Policy;
 
-	 /*  [HttpGet]
-				public ActionResult Download(string path, string policy)
-				{
-					var decodedPolicy = Policy.DecodePolicy(SecretKey, policy);
+public class DownloadGetController extends DeclarativeWebScript{
+	 
+private String key = "Dh_s0uzo1walbqnsScJJQy|ffs";
 
-					var policyNameIsWrong = decodedPolicy.PolicyName != "DownloadPolicy";
-					var signatureIsWrong = decodedPolicy.IsSignedCorrectly == false;
-					if (policyNameIsWrong || signatureIsWrong)
-						return Forbidden();
+ protected void executeImpl(WebScriptRequest req, WebScriptResponse res){
 
-					var downloadPolicy = DownloadPolicy.FromDecodedPolicy(decodedPolicy);
-					if (downloadPolicy.IsExpired)
-						return Forbidden();
+		DecodedPolicy decodedPolicy = Policy.decodePolicy(key,req.getParameter("signedEncodedPolicy"));
+		boolean policyNameIsWrong = !decodedPolicy.getPolicyName().equals("DownloadPolicy");
+		boolean signatureIsWrong = decodedPolicy.isSignedCorrectly() == false;
+		
+		if (policyNameIsWrong || signatureIsWrong){
+			
+			throw new WebScriptException("Operation denied: policy signature is wrong");
+		}
+		DownloadPolicy downloadPolicy = DownloadPolicy.fromDecodedPolicy(decodedPolicy);
+		if (downloadPolicy.isExpired()) {
 
-					return File(Storage.GetFile(downloadPolicy.FilePath), 
-						GuessContentType(downloadPolicy.FilePath));
-				}
+			throw new WebScriptException("Operation denied: policy is expired");
+		}
 
-			    private string GuessContentType(string filePath)
-			    {
-					// todo: improve content type guessing, possibly based on 
-					// http://stackoverflow.com/questions/1910097/content-type-by-extension
-				    switch (Path.GetExtension(filePath).ToLowerInvariant())
-					{
-						case ".jpg":
-						case ".jpeg":
-							return "image/jpeg";
-						case ".gif":
-							return "image/gif";
-						case ".png":
-							return "image/png";
-						case ".pdf":
-							return "application/pdf";
-						case ".txt":
-							return "text/plain";
-						case ".html":
-						case ".htm":
-							return "text/html";
-						case ".zip":
-							return "application/zip";
-						case ".csv":
-							return "text/csv";
-						default:
-							return "application/octet-stream";
-					}
-			    }*/
+		ServletOutputStream out = null;
+		try {
+			out = (ServletOutputStream) res.getOutputStream();
 
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		res.setContentType(guessContentType(downloadPolicy.getPath()));
+		File file = new File(req.getParameter(downloadPolicy.getPath()));
+		BufferedInputStream is;
+		try {
+			is = new BufferedInputStream(new FileInputStream(file));
+			byte[] buf = new byte[4 * 1024]; // 4K buffer
+			int bytesRead;
+			while ((bytesRead = is.read(buf)) != -1) {
+				out.write(buf, 0, bytesRead);
+			}
+			is.close();
+			out.close();
+
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+			throw new WebScriptException("Operation failed: error during I/O Operation");
+		} catch (IOException e) {
+			e.printStackTrace();
+			throw new WebScriptException("Operation failed: error during I/O Operation");
+		}
+
+	}  
+
+	
+	private String guessContentType(String filePath)
+    {
+		String extension = "";
+
+		int i = filePath.lastIndexOf('.');
+		if (i > 0) {
+		    extension = filePath.substring(i+1).toLowerCase();
+		}
+		
+		if(extension.equals(".jpg")){
+			
+		}else if(extension.equals(".jpeg")){
+			return "image/jpeg";
+		}else if(extension.equals(".gif")){
+			return "image/gif";
+		}else if(extension.equals(".pdf")){
+			return "image/png";
+		}else if(extension.equals(".txt")){
+			return "application/pdf";
+		}else if(extension.equals(".html")){
+			return "text/plain";
+		}else if(extension.equals(".htm")){
+			return "text/html";
+		}else if(extension.equals(".zip")){
+			return "application/zip";
+		}else if(extension.equals(".csv")){
+			return "text/csv";
+		}
+		
+		return "application/octet-stream";
+
+    }
+	
+	
 }
+
+
+

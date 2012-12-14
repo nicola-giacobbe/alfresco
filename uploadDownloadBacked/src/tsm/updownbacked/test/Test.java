@@ -1,10 +1,7 @@
 package tsm.updownbacked.test;
 
 import java.text.ParseException;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.TreeMap;
-
 import tsm.updownbacked.model.DecodedPolicy;
 import tsm.updownbacked.model.Policy;
 import tsm.updownbacked.model.UploadPolicy;

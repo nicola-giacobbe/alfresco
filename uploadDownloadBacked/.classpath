@@ -11,7 +11,7 @@
 	<classpathentry kind="lib" path="C:/Alfresco/tomcat/webapps/alfresco/WEB-INF/lib/alfresco-mm-repo-0.1.5.9.jar"/>
 	<classpathentry kind="lib" path="C:/Alfresco/tomcat/webapps/alfresco/WEB-INF/lib/alfresco-opencmis-extension-0.3.jar"/>
 	<classpathentry kind="lib" path="C:/Alfresco/tomcat/webapps/alfresco/WEB-INF/lib/alfresco-remote-api-4.2.b.jar"/>
-	<classpathentry kind="lib" path="C:/Alfresco/tomcat/webapps/alfresco/WEB-INF/lib/alfresco-repository-4.2.b.jar"/>
+	<classpathentry kind="lib" path="C:/Alfresco/tomcat/webapps/alfresco/WEB-INF/lib/alfresco-repository-4.2.b.jar" sourcepath="C:/Users/tomasz/Documents/workspace-eclipse-indigo/alfresco/root.zip"/>
 	<classpathentry kind="lib" path="C:/Alfresco/tomcat/webapps/alfresco/WEB-INF/lib/alfresco-vti-4.2.b.jar"/>
 	<classpathentry kind="lib" path="C:/Alfresco/tomcat/webapps/alfresco/WEB-INF/lib/alfresco-wdr-deployment.jar"/>
 	<classpathentry kind="lib" path="C:/Alfresco/tomcat/webapps/alfresco/WEB-INF/lib/alfresco-web-client-4.2.b.jar"/>

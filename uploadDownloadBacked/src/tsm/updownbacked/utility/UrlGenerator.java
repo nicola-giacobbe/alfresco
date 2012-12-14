@@ -18,11 +18,7 @@ public class UrlGenerator {
 	}
 	
 	public String getUploadUrl(String path, String redirectUrl, int maximumSizeInMB, Date expiresAt){
-		UploadPolicy policy = new UploadPolicy (
-			maximumSizeInMB,
-			expiresAt
-		);
-
+		UploadPolicy policy = new UploadPolicy (maximumSizeInMB,expiresAt);
 		return getUploadUrl(policy);
 	}
 	
@@ -48,12 +44,9 @@ public class UrlGenerator {
 	
 	public String getEncodedUploadedPolicyParam(int maximumSizeInMB){
 		
-		UploadPolicy policy = new UploadPolicy (
-				maximumSizeInMB
-		);
+		UploadPolicy policy = new UploadPolicy (maximumSizeInMB);
 		
 		String policyParam = policy.getSignedEncodedPolicy(secretKey);
-
 		return policyParam;
 	}
 	

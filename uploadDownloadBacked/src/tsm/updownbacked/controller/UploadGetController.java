@@ -21,6 +21,5 @@ public class UploadGetController extends DeclarativeWebScript{
  	    model.put("signedEncodedPolicy", encodedUploadPolicy);
  	    return model;
  	}
- 	
 	
 }
