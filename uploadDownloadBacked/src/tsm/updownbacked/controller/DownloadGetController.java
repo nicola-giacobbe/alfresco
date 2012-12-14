@@ -6,7 +6,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import javax.servlet.ServletOutputStream;
-import org.springframework.extensions.webscripts.DeclarativeWebScript;
+import org.springframework.extensions.webscripts.AbstractWebScript;
 import org.springframework.extensions.webscripts.WebScriptException;
 import org.springframework.extensions.webscripts.WebScriptRequest;
 import org.springframework.extensions.webscripts.WebScriptResponse;
@@ -14,11 +14,12 @@ import tsm.updownbacked.model.DecodedPolicy;
 import tsm.updownbacked.model.DownloadPolicy;
 import tsm.updownbacked.model.Policy;
 
-public class DownloadGetController extends DeclarativeWebScript{
+public class DownloadGetController extends AbstractWebScript{
 	 
 private String key = "Dh_s0uzo1walbqnsScJJQy|ffs";
 
- protected void executeImpl(WebScriptRequest req, WebScriptResponse res){
+@Override
+public void execute(WebScriptRequest req, WebScriptResponse res)throws IOException {
 
 		DecodedPolicy decodedPolicy = Policy.decodePolicy(key,req.getParameter("signedEncodedPolicy"));
 		boolean policyNameIsWrong = !decodedPolicy.getPolicyName().equals("DownloadPolicy");
