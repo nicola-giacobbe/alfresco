@@ -9,10 +9,16 @@
   <bean id="webscript.tsm.upload.upload.post"
         class="tsm.updownbacked.controller.UploadPostController" parent="webscript">	
 		<property name="repository" ref="repositoryHelper"/>
+		<property name="serviceRegistry">
+         <ref bean="ServiceRegistry"/>
+       </property>
   </bean>
-  
   <bean id="webscript.tsm.download.download.get" 
         class="tsm.updownbacked.controller.DownloadGetController" parent="webscript">	
+		<property name="repository" ref="repositoryHelper"/>
+		<property name="serviceRegistry">
+         <ref bean="ServiceRegistry"/>
+       </property>
   </bean>
 
 </beans>

@@ -61,5 +61,33 @@ public class Utility {
 		return result;
 	}   
 	
-	
+	public static String guessContentType(String filePath){
+		String extension = "";
+
+		int i = filePath.lastIndexOf('.');
+		if (i > 0) {
+		    extension = filePath.substring(i).toLowerCase();
+		}
+		
+		if(extension.equals(".jpeg") || extension.equals(".jpg")){
+			return "image/jpeg";
+		}else if(extension.equals(".gif")){
+			return "image/gif";
+		}else if(extension.equals(".png")){
+			return "image/png";
+		}else if(extension.equals(".pdf")){
+			return "application/pdf";
+		}else if(extension.equals(".txt")){
+			return "text/plain";
+		}else if(extension.equals(".html") || extension.equals(".htm")){
+			return "text/html";
+		}else if(extension.equals(".zip")){
+			return "application/zip";
+		}else if(extension.equals(".csv")){
+			return "text/csv";
+		}
+		
+		return "application/octet-stream";
+
+    }
 }

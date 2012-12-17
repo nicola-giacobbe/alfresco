@@ -108,7 +108,7 @@ public abstract class Policy {
 	    for (String pairLine : linesLinkedList) {
 			
 			String[] parts = pairLine.split("="); 
-			values.put(parts[0], parts[1]);
+			values.put(parts[0],parts[1]);
 		}
 	    		
 		boolean signatureIsCorrect = Utility.sign( secretKey,getUnsignedString(linesLinkedList,policyName,values)).equals( signature );

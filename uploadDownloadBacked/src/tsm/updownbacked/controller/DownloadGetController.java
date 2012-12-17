@@ -1,11 +1,23 @@
 package tsm.updownbacked.controller;
 
 import java.io.BufferedInputStream;
-import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
+
 import javax.servlet.ServletOutputStream;
+import javax.servlet.http.HttpServletResponse;
+
+import org.alfresco.model.ContentModel;
+import org.alfresco.repo.content.filestore.FileContentReader;
+import org.alfresco.repo.model.Repository;
+import org.alfresco.service.ServiceRegistry;
+import org.alfresco.service.cmr.repository.ContentReader;
+import org.alfresco.service.cmr.repository.NodeRef;
+import org.apache.commons.io.IOUtils;
 import org.springframework.extensions.webscripts.AbstractWebScript;
 import org.springframework.extensions.webscripts.WebScriptException;
 import org.springframework.extensions.webscripts.WebScriptRequest;
@@ -13,11 +25,24 @@ import org.springframework.extensions.webscripts.WebScriptResponse;
 import tsm.updownbacked.model.DecodedPolicy;
 import tsm.updownbacked.model.DownloadPolicy;
 import tsm.updownbacked.model.Policy;
+import tsm.updownbacked.utility.Utility;
 
 public class DownloadGetController extends AbstractWebScript{
 	 
 private String key = "Dh_s0uzo1walbqnsScJJQy|ffs";
 
+private Repository repository;
+	
+	private ServiceRegistry serviceRegistry;
+	
+	public void setRepository(Repository repository){
+	    this.repository = repository;
+	}
+	  
+	public void setServiceRegistry(ServiceRegistry serviceRegistry) {
+	this.serviceRegistry = serviceRegistry;
+}
+	
 @Override
 public void execute(WebScriptRequest req, WebScriptResponse res)throws IOException {
 
@@ -34,71 +59,22 @@ public void execute(WebScriptRequest req, WebScriptResponse res)throws IOExcepti
 
 			throw new WebScriptException("Operation denied: policy is expired");
 		}
-
-		ServletOutputStream out = null;
-		try {
-			out = (ServletOutputStream) res.getOutputStream();
-
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		res.setContentType(guessContentType(downloadPolicy.getPath()));
-		File file = new File(req.getParameter(downloadPolicy.getPath()));
-		BufferedInputStream is;
-		try {
-			is = new BufferedInputStream(new FileInputStream(file));
-			byte[] buf = new byte[4 * 1024]; // 4K buffer
-			int bytesRead;
-			while ((bytesRead = is.read(buf)) != -1) {
-				out.write(buf, 0, bytesRead);
-			}
-			is.close();
-			out.close();
-
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-			throw new WebScriptException("Operation failed: error during I/O Operation");
-		} catch (IOException e) {
-			e.printStackTrace();
-			throw new WebScriptException("Operation failed: error during I/O Operation");
-		}
-
-	}  
-
-	
-	private String guessContentType(String filePath)
-    {
-		String extension = "";
-
-		int i = filePath.lastIndexOf('.');
-		if (i > 0) {
-		    extension = filePath.substring(i+1).toLowerCase();
-		}
 		
-		if(extension.equals(".jpg")){
-			
-		}else if(extension.equals(".jpeg")){
-			return "image/jpeg";
-		}else if(extension.equals(".gif")){
-			return "image/gif";
-		}else if(extension.equals(".pdf")){
-			return "image/png";
-		}else if(extension.equals(".txt")){
-			return "application/pdf";
-		}else if(extension.equals(".html")){
-			return "text/plain";
-		}else if(extension.equals(".htm")){
-			return "text/html";
-		}else if(extension.equals(".zip")){
-			return "application/zip";
-		}else if(extension.equals(".csv")){
-			return "text/csv";
-		}
 		
-		return "application/octet-stream";
-
-    }
-	
+		NodeRef companyHome = repository.getCompanyHome();
+		ContentReader reader = serviceRegistry.getContentService().getReader(companyHome, ContentModel.PROP_CONTENT);	
+		reader.setMimetype(Utility.guessContentType(req.getParameter("fileName")));
+        try { 
+        	
+        	FileChannel fileChannel = reader.getFileChannel();
+            ByteBuffer buffer = ByteBuffer.allocate(64);
+            fileChannel.read(buffer);
+ 
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+	        
+	}  	
 	
 }
 

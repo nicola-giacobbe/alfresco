@@ -143,5 +143,6 @@
 	<classpathentry kind="lib" path="C:/Users/tomasz/Desktop/commons-codec-1.7-bin/commons-codec-1.7/commons-codec-1.7.jar"/>
 	<classpathentry kind="lib" path="C:/Users/tomasz/Desktop/htmlparser-1.6.jar"/>
 	<classpathentry kind="lib" path="C:/Users/tomasz/Desktop/commons-logging-1.0.4.jar"/>
+	<classpathentry kind="lib" path="C:/Users/tomasz/Desktop/commons-io-2.4-bin/commons-io-2.4/commons-io-2.4.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

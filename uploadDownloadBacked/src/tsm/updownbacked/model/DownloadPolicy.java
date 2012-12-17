@@ -9,18 +9,18 @@ import java.util.TreeMap;
 
 public class DownloadPolicy extends Policy {
 
-	private String path;
+	private String idNodRef;
 	
-	public DownloadPolicy(String path, Date expiresAt){
+	public DownloadPolicy(String idNodRef, Date expiresAt){
 		
 		this.expiresAt=expiresAt;
-		this.path = path;
+		this.idNodRef = idNodRef;
 	}
 	
-	public DownloadPolicy(String path ){
+	public DownloadPolicy(String idNodRef ){
 		
 		super();
-		this.path = path;
+		this.idNodRef = idNodRef;
 	}
 	
 	@Override
@@ -28,21 +28,21 @@ public class DownloadPolicy extends Policy {
 		
 		TreeMap values = new TreeMap<String, Object>();
 		values.put("ExpiresAt", expiresAt);
-		values.put("Path", path);
+		values.put("idNodRef", idNodRef);
 		return getSignedEncodedPolicy(secretKey, "DownloadPolicy", values);
 	}
 
-	public String getPath() {
-		return path;
+	public String getIdNodRef() {
+		return idNodRef;
 	}
 
-	public void setPath(String path) {
-		this.path = path;
+	public void setIdNodRef(String idNodRef) {
+		this.idNodRef = idNodRef;
 	}
 
 	public static DownloadPolicy fromDecodedPolicy(DecodedPolicy decodedPolicy) {
 		
-		String path = decodedPolicy.getValues().get("Path");
+		String idNodRef = decodedPolicy.getValues().get("idNodRef");
 		
 		DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 		formatter.setTimeZone(TimeZone.getTimeZone("GMT"));
@@ -58,6 +58,6 @@ public class DownloadPolicy extends Policy {
 		  
 		Date expiresAt = date;
 				
-		return new DownloadPolicy(path,expiresAt);
+		return new DownloadPolicy(idNodRef,expiresAt);
 	}
 }
