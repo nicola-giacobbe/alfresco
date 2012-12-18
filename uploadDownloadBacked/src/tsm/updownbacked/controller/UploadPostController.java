@@ -1,17 +1,16 @@
 package tsm.updownbacked.controller;
 
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
-
-import org.alfresco.jlan.server.filesys.FileName;
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.model.Repository;
 import org.alfresco.service.ServiceRegistry;
-import org.alfresco.service.cmr.repository.ContentService;
+import org.alfresco.service.cmr.model.FileInfo;
 import org.alfresco.service.cmr.repository.ContentWriter;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.springframework.extensions.surf.util.Content;
@@ -32,8 +31,7 @@ public class UploadPostController extends DeclarativeWebScript{
  	private String key = "Dh_s0uzo1walbqnsScJJQy|ffs";
 
  	private static final long  MEGABYTE = 1024L * 1024L;
- 	
- 	//private static final String  uploadFolderPath = "C:\\Alfresco\\tomcat\\shared\\uploadFolder\\";
+ 
  	private static final String  downloadActionUrl = "/alfresco/service/download";
  	
  	private Repository repository;
@@ -52,8 +50,10 @@ public class UploadPostController extends DeclarativeWebScript{
 	@Override
 	protected Map<String, Object> executeImpl(WebScriptRequest req, Status status, Cache cache){
 
+		//Decoding policy with secret key
     	DecodedPolicy decodedPolicy = Policy.decodePolicy(key, req.getParameter("signedEncodedPolicy"));
-		boolean policyNameIsWrong = !decodedPolicy.getPolicyName().equals("UploadPolicy");
+		
+    	boolean policyNameIsWrong = !decodedPolicy.getPolicyName().equals("UploadPolicy");
 		boolean signatureIsWrong = decodedPolicy.isSignedCorrectly() == false;
 		Map<String, Object> model = new HashMap<String, Object>();
 	
@@ -61,7 +61,6 @@ public class UploadPostController extends DeclarativeWebScript{
 			
 			throw new WebScriptException("Operation denied: policy signature is wrong");
 		}
-
 		UploadPolicy uploadPolicy = UploadPolicy.fromDecodedPolicy(decodedPolicy);
 		if (uploadPolicy.isExpired()){
 			
@@ -69,51 +68,72 @@ public class UploadPostController extends DeclarativeWebScript{
 		}
     			
 		String filename = null;
+		FileInfo fileInfo=null;
 		NodeRef companyHome = repository.getCompanyHome();
-		ContentService contentService = this.serviceRegistry.getContentService();
 		
 	    FormData formData = (FormData)req.parseContent(); // <-- req = WebScriptRequest
         FormData.FormField[] fields = formData.getFields();
+        
         for(FormData.FormField field : fields) {
             	
                 if(field.getIsFile()) {
-                 
+                	//Getting fields from multipart-form
                     filename = field.getFilename();
                     Content content = field.getContent();
-                    System.out.println("Size: "+field.getContent().getSize());
-                                      
-                    if (field.getContent().getSize()/MEGABYTE > uploadPolicy.getMaximumSizeInMB()){
+
+                    //Search for nodeRef with that filename             
+            		NodeRef nodeRef = this.serviceRegistry.getFileFolderService().searchSimple(companyHome,filename);
+            		
+            		//If nodeRef exists for the same filename delete nodeRef and create another
+            		if(null!=nodeRef){
+            		this.serviceRegistry.getFileFolderService().delete(nodeRef);
+            		}
+            		//Create nodeRef for new file
+                    fileInfo = this.serviceRegistry.getFileFolderService().create(companyHome, filename, ContentModel.TYPE_CONTENT);
+                      
+                    //Obtaining contentwriter for new nodeRef
+                    ContentWriter contentWriter = this.serviceRegistry.getFileFolderService().getWriter(fileInfo.getNodeRef());
+                    contentWriter.setMimetype(Utility.guessContentType(filename));
+                    
+                    //getting ByteArrayOutputStream from InputStream
+                    InputStream in = content.getInputStream();
+
+                    byte[] buff = new byte[8000];
+
+                    int bytesRead = 0;
+
+                    ByteArrayOutputStream bao = new ByteArrayOutputStream();
+
+                    try {
+						while((bytesRead = in.read(buff)) != -1) {
+						   bao.write(buff, 0, bytesRead);
+						}
+					} catch (IOException e) {
+						
+						e.printStackTrace();
+						throw new WebScriptException("Operation failed: I/O error");
+						
+					}
+                    //Obtaining Byte array
+                    byte[] data = bao.toByteArray();
+                    System.out.println("size in megabyte :"+bao.size()/MEGABYTE);
+                    if (bao.size()/MEGABYTE > uploadPolicy.getMaximumSizeInMB()){
     					
     					throw new WebScriptException("Operation denied: file uploaded too large");
     				}
-                
-                    ContentWriter contentWriter = contentService.getWriter(companyHome, ContentModel.PROP_CONTENT, true);
-                    contentWriter.setMimetype(Utility.guessContentType(filename));
-
-                    FileChannel fileChannel = contentWriter.getFileChannel(false);
-                    ByteBuffer bf;
-					try {
-						bf = ByteBuffer.wrap(content.getContent().getBytes());
-					    fileChannel.position(contentWriter.getSize());
-                        fileChannel.write(bf);
-                        fileChannel.force(false);
-                        fileChannel.close();
-                    } catch (IOException e) {
-                    	
-						e.printStackTrace();
-    					throw new WebScriptException("Operation failed: error during I/O operation");
-					}
-                   
                     
+                    contentWriter.putContent(new ByteArrayInputStream(data));
+                 
+                    //Setup model
                     model.put("fileName", filename);
-                    model.put("fileSize", content.getSize());
+                    model.put("fileSize", bao.size());
                  }	
                   
                
         }
 
 	 	PolicyGenerator policyGenerator = new PolicyGenerator(key);
-	 	String encodedDownloadPolicy = policyGenerator.getEncodedDownloadPolicyParam(companyHome.getId());    
+	 	String encodedDownloadPolicy = policyGenerator.getEncodedDownloadPolicyParam(fileInfo.getNodeRef().getId());    
 	 	model.put("downloadUrlWithPolicy",downloadActionUrl+"?fileName="+filename+"&"+"signedEncodedPolicy="+encodedDownloadPolicy);            
 	   
 	    return model;
