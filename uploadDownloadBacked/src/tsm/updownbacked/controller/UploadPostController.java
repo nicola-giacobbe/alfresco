@@ -1,10 +1,11 @@
 package tsm.updownbacked.controller;
 
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.Map;
 import org.alfresco.model.ContentModel;
@@ -23,7 +24,6 @@ import org.springframework.extensions.webscripts.servlet.FormData;
 import tsm.updownbacked.model.DecodedPolicy;
 import tsm.updownbacked.model.Policy;
 import tsm.updownbacked.model.UploadPolicy;
-import tsm.updownbacked.utility.PolicyGenerator;
 import tsm.updownbacked.utility.Utility;
 
 public class UploadPostController extends DeclarativeWebScript{
@@ -51,7 +51,7 @@ public class UploadPostController extends DeclarativeWebScript{
 	protected Map<String, Object> executeImpl(WebScriptRequest req, Status status, Cache cache){
 
 		//Decoding policy with secret key
-    	DecodedPolicy decodedPolicy = Policy.decodePolicy(key, req.getParameter("signedEncodedPolicy"));
+    	DecodedPolicy decodedPolicy = Policy.decodePolicy(key, req.getParameter("policy"));
 		
     	boolean policyNameIsWrong = !decodedPolicy.getPolicyName().equals("UploadPolicy");
 		boolean signatureIsWrong = decodedPolicy.isSignedCorrectly() == false;
@@ -70,8 +70,8 @@ public class UploadPostController extends DeclarativeWebScript{
 		String filename = null;
 		FileInfo fileInfo=null;
 		NodeRef companyHome = repository.getCompanyHome();
-		
-	    FormData formData = (FormData)req.parseContent(); // <-- req = WebScriptRequest
+		// req = WebScriptRequest
+	    FormData formData = (FormData)req.parseContent();
         FormData.FormField[] fields = formData.getFields();
         
         for(FormData.FormField field : fields) {
@@ -81,6 +81,9 @@ public class UploadPostController extends DeclarativeWebScript{
                     filename = field.getFilename();
                     Content content = field.getContent();
 
+                    String path = uploadPolicy.getFilePath();                 
+                    
+                    
                     //Search for nodeRef with that filename             
             		NodeRef nodeRef = this.serviceRegistry.getFileFolderService().searchSimple(companyHome,filename);
             		
@@ -90,6 +93,9 @@ public class UploadPostController extends DeclarativeWebScript{
             		}
             		//Create nodeRef for new file
                     fileInfo = this.serviceRegistry.getFileFolderService().create(companyHome, filename, ContentModel.TYPE_CONTENT);
+                    
+                    
+                    
                       
                     //Obtaining contentwriter for new nodeRef
                     ContentWriter contentWriter = this.serviceRegistry.getFileFolderService().getWriter(fileInfo.getNodeRef());
@@ -124,17 +130,20 @@ public class UploadPostController extends DeclarativeWebScript{
                     
                     contentWriter.putContent(new ByteArrayInputStream(data));
                  
+                    //  var redirectUrl = uploadPolicy.RedirectUrl + "?path=" + HttpUtility.UrlEncode(actualFileName);
+                    //  return Redirect(redirectUrl);
                     //Setup model
-                    model.put("fileName", filename);
-                    model.put("fileSize", bao.size());
+                    try {
+						
+                    	model.put("redirectUrl", uploadPolicy.getRedirectUrl()+"?path=" + URLEncoder.encode(uploadPolicy.getFilePath(), "UTF-8"));
+					
+                    } catch (UnsupportedEncodingException e) {
+                    	
+						e.printStackTrace();
+					}
                  }	
                   
-               
-        }
-
-	 	PolicyGenerator policyGenerator = new PolicyGenerator(key);
-	 	String encodedDownloadPolicy = policyGenerator.getEncodedDownloadPolicyParam(fileInfo.getNodeRef().getId());    
-	 	model.put("downloadUrlWithPolicy",downloadActionUrl+"?fileName="+filename+"&"+"signedEncodedPolicy="+encodedDownloadPolicy);            
+        }           
 	   
 	    return model;
 

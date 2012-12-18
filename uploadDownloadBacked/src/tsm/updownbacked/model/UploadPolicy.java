@@ -9,6 +9,8 @@ import java.util.TreeMap;
 public class UploadPolicy extends Policy {
 
 	private int maximumSizeInMB;
+	private String filePath;
+	private String redirectUrl;
 	
 	public UploadPolicy(){
 		setMaximumSizeInMB(25);
@@ -20,25 +22,27 @@ public class UploadPolicy extends Policy {
 		this.expiresAt = expiresAt;
 	}
 	
+	public UploadPolicy(int maximumSizeInMB,Date expiresAt,String filePath,String redirectUrl){
+		
+		this.maximumSizeInMB = maximumSizeInMB;
+		this.expiresAt = expiresAt;
+		this.filePath = filePath;
+		this.redirectUrl = redirectUrl;
+	}
+	
 	public UploadPolicy(int maximumSizeInMB){
 		super();
 		this.maximumSizeInMB = maximumSizeInMB;
 	}
-
-	public int getMaximumSizeInMB() {
-		return maximumSizeInMB;
-	}
-
-	public void setMaximumSizeInMB(int maximumSizeInMB) {
-		this.maximumSizeInMB = maximumSizeInMB;
-	}
-	
 	
 	public String getSignedEncodedPolicy(String secretKey){
 		
 		TreeMap<String, Object> values = new TreeMap<String, Object>();
 		values.put("MaximumSizeInMB", maximumSizeInMB);
+		values.put("FilePath", filePath);
+		values.put("RedirectUrl", redirectUrl);
 		values.put("ExpiresAt", expiresAt);
+		
 
 		return getSignedEncodedPolicy(secretKey, "UploadPolicy", values);
 	}
@@ -60,8 +64,35 @@ public class UploadPolicy extends Policy {
 		}
 		  
 		Date expiresAt = date;
-				
-		return new UploadPolicy(maximumSizeInMB,expiresAt);
+		
+		String filePath = decodedPolicy.getValues().get("FilePath");
+		String redirectUrl = decodedPolicy.getValues().get("redirectUrl");
+					
+		return new UploadPolicy(maximumSizeInMB,expiresAt,filePath,redirectUrl);
+	}
+	
+	public int getMaximumSizeInMB() {
+		return maximumSizeInMB;
+	}
+
+	public void setMaximumSizeInMB(int maximumSizeInMB) {
+		this.maximumSizeInMB = maximumSizeInMB;
+	}
+
+	public String getFilePath() {
+		return filePath;
+	}
+
+	public void setFilePath(String filePath) {
+		this.filePath = filePath;
+	}
+
+	public String getRedirectUrl() {
+		return redirectUrl;
+	}
+
+	public void setRedirectUrl(String redirectUrl) {
+		this.redirectUrl = redirectUrl;
 	}
 	
 }

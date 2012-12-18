@@ -1,5 +1,6 @@
 package tsm.updownbacked.controller;
 
+import java.io.File;
 import java.io.IOException;
 import org.alfresco.repo.model.Repository;
 import org.alfresco.service.ServiceRegistry;
@@ -18,7 +19,6 @@ public class DownloadGetController extends AbstractWebScript{
 private String key = "Dh_s0uzo1walbqnsScJJQy|ffs";
 
 private final static String FILENAME_PARAM= "fileName";
-private final static String SIGNED_ENCODED_POLICY_PARAM= "signedEncodedPolicy";
 private final static String DOWNLOAD_POLICY_NAME= "DownloadPolicy";
 
 private Repository repository;
@@ -36,7 +36,7 @@ private Repository repository;
 @Override
 public void execute(WebScriptRequest req, WebScriptResponse res)throws IOException {
 
-		DecodedPolicy decodedPolicy = Policy.decodePolicy(key,req.getParameter(SIGNED_ENCODED_POLICY_PARAM));
+		DecodedPolicy decodedPolicy = Policy.decodePolicy(key,req.getParameter("policy"));
 		boolean policyNameIsWrong = !decodedPolicy.getPolicyName().equals(DOWNLOAD_POLICY_NAME);
 		boolean signatureIsWrong = decodedPolicy.isSignedCorrectly() == false;
 		
@@ -49,10 +49,12 @@ public void execute(WebScriptRequest req, WebScriptResponse res)throws IOExcepti
 
 			throw new WebScriptException("Operation denied: policy is expired");
 		}
+		String filePath = downloadPolicy.getFilePath();
+		String fileName = new File(filePath).getName();
 		
 		NodeRef companyHome = repository.getCompanyHome();
 		//Search fileName under CompanyHome Repository
-		NodeRef nodeRef = this.serviceRegistry.getFileFolderService().searchSimple(companyHome,  req.getParameter(FILENAME_PARAM));
+		NodeRef nodeRef = this.serviceRegistry.getFileFolderService().searchSimple(companyHome,  fileName);
 		try {
 			ContentReader reader = this.serviceRegistry.getFileFolderService().getReader(nodeRef);
 			reader.getContent(res.getOutputStream());
