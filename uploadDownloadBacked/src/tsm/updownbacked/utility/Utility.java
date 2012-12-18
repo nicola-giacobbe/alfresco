@@ -12,32 +12,31 @@ public class Utility {
 
 	
 	public static String sign(String secretKey,String... items){
-		
-		SecretKeySpec signingKey = new SecretKeySpec(secretKey.getBytes(), "HmacSHA256");
-	    Mac mac = null;
-		
-	    try {
-	    	
-	    	mac = Mac.getInstance("HmacSHA256");
-		
-	    } catch (NoSuchAlgorithmException e1) { 
-			
+
+		SecretKeySpec signingKey = new SecretKeySpec(secretKey.getBytes(),"HmacSHA256");
+		Mac mac = null;
+
+		try {
+			mac = Mac.getInstance("HmacSHA256");
+
+		} catch (NoSuchAlgorithmException e1) {
+
 			e1.printStackTrace();
-		} 
-	    
-        try {
-        	
-			mac.init(signingKey);		
-			
+		}
+
+		try {
+
+			mac.init(signingKey);
+
 		} catch (InvalidKeyException e) {
-			
+
 			e.printStackTrace();
 		}
- 
-        byte[] bytes = StringUtils.join(items, "\n").getBytes();
-        //compute hash
-        byte[] rawHmac = mac.doFinal(bytes);
-        return new String(Hex.encode(rawHmac));
+
+		byte[] bytes = StringUtils.join(items, "\n").getBytes();
+		// compute hash
+		byte[] rawHmac = mac.doFinal(bytes);
+		return new String(Hex.encode(rawHmac));
 	}
 
 
