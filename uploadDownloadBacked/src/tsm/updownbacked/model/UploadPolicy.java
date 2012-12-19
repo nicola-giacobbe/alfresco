@@ -35,6 +35,13 @@ public class UploadPolicy extends Policy {
 		this.maximumSizeInMB = maximumSizeInMB;
 	}
 	
+	public UploadPolicy(int maximumSizeInMB,String filePath,String redirectUrl){
+		super();
+		this.maximumSizeInMB = maximumSizeInMB;
+		this.filePath = filePath;
+		this.redirectUrl = redirectUrl;
+	}
+	
 	public String getSignedEncodedPolicy(String secretKey){
 		
 		TreeMap<String, Object> values = new TreeMap<String, Object>();
@@ -66,7 +73,7 @@ public class UploadPolicy extends Policy {
 		Date expiresAt = date;
 		
 		String filePath = decodedPolicy.getValues().get("FilePath");
-		String redirectUrl = decodedPolicy.getValues().get("redirectUrl");
+		String redirectUrl = decodedPolicy.getValues().get("RedirectUrl");
 					
 		return new UploadPolicy(maximumSizeInMB,expiresAt,filePath,redirectUrl);
 	}

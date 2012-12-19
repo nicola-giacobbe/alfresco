@@ -18,7 +18,6 @@ public class DownloadGetController extends AbstractWebScript{
 	 
 private String key = "Dh_s0uzo1walbqnsScJJQy|ffs";
 
-private final static String FILENAME_PARAM= "fileName";
 private final static String DOWNLOAD_POLICY_NAME= "DownloadPolicy";
 
 private Repository repository;

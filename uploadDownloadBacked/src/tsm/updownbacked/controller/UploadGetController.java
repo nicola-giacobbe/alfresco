@@ -17,8 +17,10 @@ public class UploadGetController extends DeclarativeWebScript{
  		PolicyGenerator policyGenerator = new PolicyGenerator(secretKey);
  		TreeMap<String, Object> model = new TreeMap<String, Object>();
  		//maximumSizeInMB=25,ExpiresAt=30min	
- 		String encodedUploadPolicy = policyGenerator.getEncodedUploadedPolicyParam(25);
- 	    model.put("signedEncodedPolicy", encodedUploadPolicy);
+ 		//String encodedUploadPolicy = policyGenerator.getEncodedUploadedPolicyParam(25,"path.txt","www.wiki.alfresco.com/wiki/Main_Page");
+
+ 		String encodedUploadPolicy = policyGenerator.getEncodedUploadedPolicyParam(25,"BANG/BuNG/path.txt","http://brugbart.com");
+ 	    model.put("policy", encodedUploadPolicy);
  	    return model;
  	}
 	
