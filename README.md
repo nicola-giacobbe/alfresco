@@ -12,7 +12,7 @@ webscripts:
 	class="tsm.updownbacked.controller.UploadGetController" parent="webscript">
 </bean>
 
--The webscripts(descriptor,controller,response files) are loaded from the Alfresco home page, just browse inside 
+- The webscripts(descriptor,controller,response files) are loaded from the Alfresco home page, just browse inside 
 Company Home from the navigation menu' then create the folders in which put the webscript as a content. 
 
 The webscript 'upload.get' inside the tsm\upload subfolder of Company Home parent folder will be linked with the 
