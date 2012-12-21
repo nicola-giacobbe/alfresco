@@ -2,8 +2,12 @@ package tsm.updownbacked.controller;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.LinkedList;
 import org.alfresco.repo.model.Repository;
 import org.alfresco.service.ServiceRegistry;
+import org.alfresco.service.cmr.model.FileInfo;
+import org.alfresco.service.cmr.model.FileNotFoundException;
 import org.alfresco.service.cmr.repository.ContentReader;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.springframework.extensions.webscripts.AbstractWebScript;
@@ -13,6 +17,7 @@ import org.springframework.extensions.webscripts.WebScriptResponse;
 import tsm.updownbacked.model.DecodedPolicy;
 import tsm.updownbacked.model.DownloadPolicy;
 import tsm.updownbacked.model.Policy;
+import tsm.updownbacked.utility.Utility;
 
 public class DownloadGetController extends AbstractWebScript{
 	 
@@ -38,13 +43,13 @@ public void execute(WebScriptRequest req, WebScriptResponse res)throws IOExcepti
 		DecodedPolicy decodedPolicy = Policy.decodePolicy(key,req.getParameter("policy"));
 		boolean policyNameIsWrong = !decodedPolicy.getPolicyName().equals(DOWNLOAD_POLICY_NAME);
 		boolean signatureIsWrong = decodedPolicy.isSignedCorrectly() == false;
-		
+	
 		if (policyNameIsWrong || signatureIsWrong){
 			
 			throw new WebScriptException("Operation denied: policy signature is wrong");
 		}
 		DownloadPolicy downloadPolicy = DownloadPolicy.fromDecodedPolicy(decodedPolicy);
-		if (downloadPolicy.isExpired()) {
+		if (downloadPolicy.isExpired()) { 
 
 			throw new WebScriptException("Operation denied: policy is expired");
 		}
@@ -52,15 +57,44 @@ public void execute(WebScriptRequest req, WebScriptResponse res)throws IOExcepti
 		String fileName = new File(filePath).getName();
 		
 		NodeRef companyHome = repository.getCompanyHome();
-		//Search fileName under CompanyHome Repository
-		NodeRef nodeRef = this.serviceRegistry.getFileFolderService().searchSimple(companyHome,  fileName);
+		if(companyHome==null){
+			throw new WebScriptException("Unable to find the company home node");
+		}
+		FileInfo fileInfo = searchFileDirectory(filePath, companyHome);	
+		
 		try {
-			ContentReader reader = this.serviceRegistry.getFileFolderService().getReader(nodeRef);
+			ContentReader reader = this.serviceRegistry.getFileFolderService().getReader(fileInfo.getNodeRef());
 			reader.getContent(res.getOutputStream());
+			reader.setMimetype(Utility.guessContentType(fileName));
 		} catch (Exception ex) {
-			throw new WebScriptException("Unable to stream output");
+			//ex.printStackTrace();
+			WebScriptException ex2 = new WebScriptException("Unable to stream output");
+			ex2.initCause(ex);
+			throw ex2;
 		}
 	        
+	}
+
+	private FileInfo searchFileDirectory(String filePath, NodeRef companyHome) {
+		
+		LinkedList<String> folderList = new LinkedList<String>();
+		if(filePath.contains("/")){
+			  String[] lines = filePath.split("/");
+			  folderList = new LinkedList<String>(Arrays.asList(lines)); 
+		}
+
+		FileInfo fileInfo=null;
+		try {
+		
+			fileInfo = this.serviceRegistry.getFileFolderService().resolveNamePath(companyHome, folderList);
+
+		} catch (FileNotFoundException e) {
+			
+			e.printStackTrace();
+			throw new WebScriptException("Unable to find the file");
+		}
+		
+		return fileInfo;
 	}  	
 	
 }

@@ -111,6 +111,7 @@ public abstract class Policy {
 			values.put(parts[0],parts[1]);
 		}
 	    		
+	    System.out.println("values of decoded policy:" + values);
 		boolean signatureIsCorrect = Utility.sign( secretKey,getUnsignedString(linesLinkedList,policyName,values)).equals( signature );
 	    
 		return new DecodedPolicy(signatureIsCorrect, policyName, values);

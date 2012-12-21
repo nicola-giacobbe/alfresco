@@ -40,6 +40,7 @@ public class DownloadPolicy extends Policy {
 		DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 		formatter.setTimeZone(TimeZone.getTimeZone("GMT"));
 		Date date = null;
+		System.out.println("ExpiresAt value: "+decodedPolicy.getValues().get("ExpiresAt"));
 		try {
 		
 			date = (Date)formatter.parse(decodedPolicy.getValues().get("ExpiresAt"));
