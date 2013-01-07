@@ -9,6 +9,8 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.Map;
+
+import org.alfresco.model.ContentModel;
 import org.alfresco.repo.model.Repository;
 import org.alfresco.service.ServiceRegistry;
 import org.alfresco.service.cmr.model.FileInfo;
@@ -55,13 +57,14 @@ public class UploadPostController extends DeclarativeWebScript{
 		Map<String, Object> model = new HashMap<String, Object>();
 		UploadPolicy uploadPolicy = UploadPolicy.fromDecodedPolicy(decodedPolicy);
 		if (policyNameIsWrong || signatureIsWrong){
-			//Redirect error to tsm ?? !!
+			
 			//model.put("redirectUrl", uploadPolicy.getRedirectUrl()+"?errorMessage="+ e1.getMessage());	
 			//return model;
 			throw new WebScriptException("Operation denied: policy signature is wrong");
 		}
 		
 		if (uploadPolicy.isExpired()){
+			
 			//model.put("redirectUrl", uploadPolicy.getRedirectUrl()+"?errorMessage="+ e1.getMessage());	
 			//return model;
 			throw new WebScriptException("Operation denied: policy is expired");
@@ -69,7 +72,7 @@ public class UploadPostController extends DeclarativeWebScript{
     			
 		FileInfo fileInfo=null;
 		NodeRef companyHome = repository.getCompanyHome();
-		// req = WebScriptRequest
+		//req = WebScriptRequest
 	    FormData formData = (FormData)req.parseContent();
         FormData.FormField[] fields = formData.getFields();
         
@@ -83,7 +86,9 @@ public class UploadPostController extends DeclarativeWebScript{
             		NodeRef nodeRefDestinationFolder =null;            		
             		//Create folder structure under Company Home in Alfresco Repository
             		try {
-						 nodeRefDestinationFolder = Utility.createFolderStructure(companyHome, filePath,this.serviceRegistry);				
+					
+            			nodeRefDestinationFolder = Utility.createFolderStructure(companyHome,filePath,this.serviceRegistry);				
+            		
             		} catch (InvalidArgumentException e1) {
             			
             			//model.put("redirectUrl", uploadPolicy.getRedirectUrl()+"?errorMessage="+ e1.getMessage());	
@@ -92,8 +97,12 @@ public class UploadPostController extends DeclarativeWebScript{
 						
             		}         		
             		Utility.checkExistentFile(companyHome,fileName,nodeRefDestinationFolder,this.serviceRegistry);   		          		
-            		//Create nodeRef for new file
-            		fileInfo = Utility.createFileNodeRef(companyHome,fileName,nodeRefDestinationFolder,this.serviceRegistry);                  
+            		//Create File 
+            		if(null==nodeRefDestinationFolder){
+            			fileInfo = this.serviceRegistry.getFileFolderService().create(companyHome, fileName, ContentModel.TYPE_CONTENT);     
+            		}else{
+            			fileInfo = this.serviceRegistry.getFileFolderService().create(nodeRefDestinationFolder, fileName, ContentModel.TYPE_CONTENT);   
+            		}
                     //Obtaining contentwriter for new nodeRef
                     ContentWriter contentWriter = this.serviceRegistry.getFileFolderService().getWriter(fileInfo.getNodeRef());
                     contentWriter.setMimetype(Utility.guessContentType(fileName));

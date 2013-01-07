@@ -94,18 +94,6 @@ public class Utility {
 		return "application/octet-stream";
 
     }
-	
-	
-    public static FileInfo createFileNodeRef(NodeRef companyHome, String fileName,NodeRef nodeRefDestinationFolder,ServiceRegistry servRegistry) {
-		
-		FileInfo fileInfo;
-		if(null==nodeRefDestinationFolder){
-			fileInfo = servRegistry.getFileFolderService().create(companyHome, fileName, ContentModel.TYPE_CONTENT);     
-		}else{
-			fileInfo = servRegistry.getFileFolderService().create(nodeRefDestinationFolder, fileName, ContentModel.TYPE_CONTENT);   
-		}
-		return fileInfo;
-	}
 
     public static void checkExistentFile(NodeRef companyHome, String fileName,NodeRef nodeRefDestinationFolder,ServiceRegistry servRegistry) {
 		
@@ -118,7 +106,7 @@ public class Utility {
 			nodeRefDestinationFile = servRegistry.getFileFolderService().searchSimple(nodeRefDestinationFolder,fileName);
 		}
 		
-		//If nodeRef exists for the same filename delete nodeRef and create another
+		//If nodeRef exists for the same filename delete nodeRef 
 		if(null!=nodeRefDestinationFile){
 			servRegistry.getFileFolderService().delete(nodeRefDestinationFile);
 		}
@@ -140,9 +128,9 @@ public class Utility {
 		//Obtain folder list from filePath
 		LinkedList<String> folderList = new LinkedList<String>();
 	    if(filePath.contains("/")){
+	    	
 			  String[] lines = filePath.split("/");
-			  folderList = new LinkedList<String>(Arrays.asList(lines));
-			  
+			  folderList = new LinkedList<String>(Arrays.asList(lines));  
 			  //remove fileName
 			  folderList.removeLast(); 
 			  //creating folder structure under Company Home
@@ -168,7 +156,8 @@ public class Utility {
 		      }
 		      
 		      nodeRefDestinationFolder = nodeRefList.getLast();
-		}else{			
+		      
+		}else{
 			return null;
 		}	
 		return nodeRefDestinationFolder;	

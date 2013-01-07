@@ -21,11 +21,11 @@ import tsm.updownbacked.utility.Utility;
 
 public class DownloadGetController extends AbstractWebScript{
 	 
-private String key = "Dh_s0uzo1walbqnsScJJQy|ffs";
+	private String key = "Dh_s0uzo1walbqnsScJJQy|ffs";
 
-private final static String DOWNLOAD_POLICY_NAME= "DownloadPolicy";
+	private final static String DOWNLOAD_POLICY_NAME= "DownloadPolicy";
 
-private Repository repository;
+    private Repository repository;
 	
 	private ServiceRegistry serviceRegistry;
 	
@@ -35,10 +35,10 @@ private Repository repository;
 	  
 	public void setServiceRegistry(ServiceRegistry serviceRegistry) {
 	this.serviceRegistry = serviceRegistry;
-}
+	}
 	
-@Override
-public void execute(WebScriptRequest req, WebScriptResponse res)throws IOException {
+	@Override
+	public void execute(WebScriptRequest req, WebScriptResponse res)throws IOException {
 
 		DecodedPolicy decodedPolicy = Policy.decodePolicy(key,req.getParameter("policy"));
 		boolean policyNameIsWrong = !decodedPolicy.getPolicyName().equals(DOWNLOAD_POLICY_NAME);
@@ -50,7 +50,6 @@ public void execute(WebScriptRequest req, WebScriptResponse res)throws IOExcepti
 		}
 		DownloadPolicy downloadPolicy = DownloadPolicy.fromDecodedPolicy(decodedPolicy);
 		if (downloadPolicy.isExpired()) { 
-
 			throw new WebScriptException("Operation denied: policy is expired");
 		}
 		String filePath = downloadPolicy.getFilePath();
@@ -62,7 +61,7 @@ public void execute(WebScriptRequest req, WebScriptResponse res)throws IOExcepti
 		}
 		FileInfo fileInfo = searchFileDirectory(filePath, companyHome);	
 		
-		try {
+		try {	
 			ContentReader reader = this.serviceRegistry.getFileFolderService().getReader(fileInfo.getNodeRef());
 			reader.getContent(res.getOutputStream());
 			reader.setMimetype(Utility.guessContentType(fileName));
