@@ -21,7 +21,6 @@ import org.springframework.extensions.webscripts.WebScriptResponse;
 import tsm.updownbacked.model.DecodedPolicy;
 import tsm.updownbacked.model.DownloadPolicy;
 import tsm.updownbacked.model.Policy;
-import tsm.updownbacked.utility.PolicyGenerator;
 import tsm.updownbacked.utility.Utility;
 
 public class DownloadGetController extends AbstractWebScript{
@@ -46,11 +45,11 @@ public class DownloadGetController extends AbstractWebScript{
 	public void execute(WebScriptRequest req, WebScriptResponse res)throws IOException {
 
 		ContentReader reader =null;
-		PolicyGenerator policyGenerator = new PolicyGenerator(key);
-		String encodedUploadPolicy = policyGenerator.getEncodedDownloadPolicyParam("BA/BI/pet.txt", "2");
+		/*PolicyGenerator policyGenerator = new PolicyGenerator(key);
+		String encodedUploadPolicy = policyGenerator.getEncodedDownloadPolicyParam("BA/BI/pet.txt", "2");		
+		DecodedPolicy decodedPolicy = Policy.decodePolicy(key,encodedUploadPolicy);*/
 		
-		DecodedPolicy decodedPolicy = Policy.decodePolicy(key,encodedUploadPolicy);
-		//DecodedPolicy decodedPolicy = Policy.decodePolicy(key,req.getParameter("policy"));
+		DecodedPolicy decodedPolicy = Policy.decodePolicy(key,req.getParameter("policy"));
 		boolean policyNameIsWrong = !decodedPolicy.getPolicyName().equals(DOWNLOAD_POLICY_NAME);
 		boolean signatureIsWrong = decodedPolicy.isSignedCorrectly() == false;
 	
