@@ -94,26 +94,9 @@ public class Utility {
 		return "application/octet-stream";
 
     }
-
-    public static void checkExistentFile(NodeRef companyHome, String fileName,NodeRef nodeRefDestinationFolder,ServiceRegistry servRegistry) {
-		
-		NodeRef nodeRefDestinationFile = null;
-		
-		if(null==nodeRefDestinationFolder){		
-			//Search for nodeRef with that filename under Company Home             
-		    nodeRefDestinationFile = servRegistry.getFileFolderService().searchSimple(companyHome,fileName);
-		}else{
-			nodeRefDestinationFile = servRegistry.getFileFolderService().searchSimple(nodeRefDestinationFolder,fileName);
-		}
-		
-		//If nodeRef exists for the same filename delete nodeRef 
-		if(null!=nodeRefDestinationFile){
-			servRegistry.getFileFolderService().delete(nodeRefDestinationFile);
-		}
-	}
 	
 	
-    public static NodeRef createFolderStructure(NodeRef parent,String filePath,ServiceRegistry servRegistry)throws InvalidArgumentException{
+    public static NodeRef getFolderStructure(NodeRef parent,String filePath,ServiceRegistry servRegistry)throws InvalidArgumentException{
 		
 		NodeRef nodeRefDestinationFolder = null;
 		

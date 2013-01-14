@@ -5,17 +5,19 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.Map;
-
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.model.Repository;
 import org.alfresco.service.ServiceRegistry;
 import org.alfresco.service.cmr.model.FileInfo;
 import org.alfresco.service.cmr.repository.ContentWriter;
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.cmr.repository.NodeService;
+import org.alfresco.service.namespace.QName;
 import org.springframework.extensions.surf.util.Content;
 import org.springframework.extensions.webscripts.Cache;
 import org.springframework.extensions.webscripts.DeclarativeWebScript;
@@ -33,10 +35,12 @@ public class UploadPostController extends DeclarativeWebScript{
 		 
  	private String key = "Dh_s0uzo1walbqnsScJJQy|ffs";
  	private static final long  MEGABYTE = 1024L * 1024L;
- 	
+ 	private final static String tagVersionPrefix= "TSM_TAG_VERSION"; 
+	
  	private Repository repository;
- 	private ServiceRegistry serviceRegistry;
  	
+ 	private ServiceRegistry serviceRegistry;
+ 	   
  	public void setRepository(Repository repository){
  	    this.repository = repository;
  	}
@@ -48,23 +52,22 @@ public class UploadPostController extends DeclarativeWebScript{
 
 	@Override
 	protected Map<String, Object> executeImpl(WebScriptRequest req, Status status, Cache cache){
-
-		//Decoding policy with secret key
-    	DecodedPolicy decodedPolicy = Policy.decodePolicy(key, req.getParameter("policy"));
 		
+		Map<String, Object> model = new HashMap<String, Object>();
+		
+		//Decoding policy with secret key
+    	DecodedPolicy decodedPolicy = Policy.decodePolicy(key, req.getParameter("policy"));		
     	boolean policyNameIsWrong = !decodedPolicy.getPolicyName().equals("UploadPolicy");
 		boolean signatureIsWrong = decodedPolicy.isSignedCorrectly() == false;
-		Map<String, Object> model = new HashMap<String, Object>();
 		UploadPolicy uploadPolicy = UploadPolicy.fromDecodedPolicy(decodedPolicy);
-		if (policyNameIsWrong || signatureIsWrong){
-			
+		
+		if (policyNameIsWrong || signatureIsWrong){			
 			//model.put("redirectUrl", uploadPolicy.getRedirectUrl()+"?errorMessage="+ e1.getMessage());	
 			//return model;
 			throw new WebScriptException("Operation denied: policy signature is wrong");
 		}
 		
-		if (uploadPolicy.isExpired()){
-			
+		if (uploadPolicy.isExpired()){		
 			//model.put("redirectUrl", uploadPolicy.getRedirectUrl()+"?errorMessage="+ e1.getMessage());	
 			//return model;
 			throw new WebScriptException("Operation denied: policy is expired");
@@ -83,12 +86,14 @@ public class UploadPostController extends DeclarativeWebScript{
                     Content content = field.getContent();      
                 	String filePath = uploadPolicy.getFilePath();
             		String fileName = new File(filePath).getName();
-            		NodeRef nodeRefDestinationFolder =null;            		
-            		//Create folder structure under Company Home in Alfresco Repository
-            		try {
-					
-            			nodeRefDestinationFolder = Utility.createFolderStructure(companyHome,filePath,this.serviceRegistry);				
+            		NodeRef nodeRefTargetFolder =null;            		
+            		NodeRef nodeRefTargetFile = null;
+            		ContentWriter writer = null;
+            		NodeService nodeService = this.serviceRegistry.getNodeService();;
             		
+            		//Create folder structure under Company Home in Alfresco Repository and return NodeRef
+            		try {					
+            			nodeRefTargetFolder = Utility.getFolderStructure(companyHome,filePath,this.serviceRegistry);				
             		} catch (InvalidArgumentException e1) {
             			
             			//model.put("redirectUrl", uploadPolicy.getRedirectUrl()+"?errorMessage="+ e1.getMessage());	
@@ -96,20 +101,41 @@ public class UploadPostController extends DeclarativeWebScript{
 						throw new WebScriptException("Operation failed: error occurred during the creation of the folder structure under Company Home in Alfresco Repository");
 						
             		}         		
-            		Utility.checkExistentFile(companyHome,fileName,nodeRefDestinationFolder,this.serviceRegistry);   		          		
-            		//Create File 
-            		if(null==nodeRefDestinationFolder){
-            			fileInfo = this.serviceRegistry.getFileFolderService().create(companyHome, fileName, ContentModel.TYPE_CONTENT);     
+            		
+            		//Search for nodeRef with that filename under Company Home or in the target folder 
+            		nodeRefTargetFile = gerNodRefTargetFile(companyHome,fileName, nodeRefTargetFolder);
+            		
+            		//If nodeRef exists for the same filename update nodeRef 
+            		if(null!=nodeRefTargetFile){
+            			
+            			System.out.println("UPDATE targetNode with new content..");          			
+            			//Obtaining contentwriter for new nodeRef to be updated         		
+            			addTagVersionProperty(uploadPolicy, filePath,nodeRefTargetFile, nodeService);           		
+            			writer = this.serviceRegistry.getContentService().getWriter(nodeRefTargetFile, ContentModel.TYPE_CONTENT, true);               	
+            		
             		}else{
-            			fileInfo = this.serviceRegistry.getFileFolderService().create(nodeRefDestinationFolder, fileName, ContentModel.TYPE_CONTENT);   
-            		}
-                    //Obtaining contentwriter for new nodeRef
-                    ContentWriter contentWriter = this.serviceRegistry.getFileFolderService().getWriter(fileInfo.getNodeRef());
-                    contentWriter.setMimetype(Utility.guessContentType(fileName));
-                    
-                    //getting ByteArrayOutputStream from InputStream
-                    byte[] data = getByteArrayOutputFromContent(uploadPolicy,content);                   
-                    contentWriter.putContent(new ByteArrayInputStream(data));                 
+        			    
+            			System.out.println("CREATE targetNode and put content..");
+            			
+	            		if(null==nodeRefTargetFolder){
+	            			fileInfo = this.serviceRegistry.getFileFolderService().create(companyHome, fileName, ContentModel.TYPE_CONTENT);   
+	            		}else{
+	            			fileInfo = this.serviceRegistry.getFileFolderService().create(nodeRefTargetFolder, fileName, ContentModel.TYPE_CONTENT);  
+	            		}
+
+            			addTagVersionProperty(uploadPolicy, filePath,fileInfo.getNodeRef(), nodeService);        		
+	            		nodeService.addAspect(fileInfo.getNodeRef(), ContentModel.ASPECT_VERSIONABLE,null);             		                    
+	            		//Obtaining contentwriter for new nodeRef
+	                    writer = this.serviceRegistry.getFileFolderService().getWriter(fileInfo.getNodeRef());                                        
+         
+            		} 
+                  	
+            		writer.setMimetype(Utility.guessContentType(fileName));
+					//getting ByteArrayOutputStream from InputStream
+					byte[] data = getByteArrayOutputFromContent(uploadPolicy,content);                   
+					writer.putContent(new ByteArrayInputStream(data));
+        		
+						
                     try {						
                     	model.put("redirectUrl", uploadPolicy.getRedirectUrl()+"?path=" + URLEncoder.encode(uploadPolicy.getFilePath(), "UTF-8"));					        
                     } catch (UnsupportedEncodingException e) {                  	
@@ -123,6 +149,25 @@ public class UploadPostController extends DeclarativeWebScript{
 
     }
 
+	private void addTagVersionProperty(UploadPolicy uploadPolicy,String filePath, NodeRef nodeRefTargetFile, NodeService nodeService) {
+		
+		Map<QName, Serializable> contentProps = new HashMap<QName, Serializable>();
+		contentProps.put(ContentModel.PROP_AUTHOR, tagVersionPrefix+uploadPolicy.getTagVersion()+Utility.urlSafeBase64Encode(filePath));
+		nodeService.addProperties(nodeRefTargetFile,contentProps);
+	
+	}
+
+	private NodeRef gerNodRefTargetFile(NodeRef companyHome, String fileName,NodeRef nodeRefTargetFolder) {
+		
+		NodeRef nodeRefTargetFile;
+		if(null==nodeRefTargetFolder){		         			          
+		    nodeRefTargetFile = this.serviceRegistry.getFileFolderService().searchSimple(companyHome,fileName);
+		}else{
+			nodeRefTargetFile = this.serviceRegistry.getFileFolderService().searchSimple(nodeRefTargetFolder,fileName);
+		}
+		return nodeRefTargetFile;
+	}
+	
 	
 	private byte[] getByteArrayOutputFromContent(UploadPolicy uploadPolicy,
 			Content content) {

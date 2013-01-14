@@ -11,16 +11,18 @@ public class DownloadPolicy extends Policy {
 
 	private String filePath;
 	
-	public DownloadPolicy(String filePath, Date expiresAt){
+	public DownloadPolicy(String filePath, Date expiresAt,String tagVersion){
 		
 		this.expiresAt=expiresAt;
 		this.filePath = filePath;
+		this.tagVersion = tagVersion;
 	}
 	
-	public DownloadPolicy(String filePath ){
+	public DownloadPolicy(String filePath,String tagVersion ){
 		
 		super();
 		this.filePath = filePath;
+		this.tagVersion = tagVersion;
 	}
 	
 	@Override
@@ -29,6 +31,7 @@ public class DownloadPolicy extends Policy {
 		TreeMap values = new TreeMap<String, Object>();
 		values.put("FilePath", filePath);
 		values.put("ExpiresAt", expiresAt);
+		values.put("TagVersion", tagVersion);
 		return getSignedEncodedPolicy(secretKey, "DownloadPolicy", values);
 	}
 
@@ -51,8 +54,10 @@ public class DownloadPolicy extends Policy {
 		}
 		  
 		Date expiresAt = date;
+
+		String tagVersion = decodedPolicy.getValues().get("TagVersion");
 				
-		return new DownloadPolicy(filePath,expiresAt);
+		return new DownloadPolicy(filePath,expiresAt,tagVersion);
 	}
 
 	public String getFilePath() {
