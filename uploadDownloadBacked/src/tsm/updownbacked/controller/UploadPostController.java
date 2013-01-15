@@ -57,16 +57,17 @@ public class UploadPostController extends DeclarativeWebScript{
 		
 		//Decoding policy with secret key
     	DecodedPolicy decodedPolicy = Policy.decodePolicy(key, req.getParameter("policy"));		
+    	
+    	//Validate decoded policy
     	boolean policyNameIsWrong = !decodedPolicy.getPolicyName().equals("UploadPolicy");
-		boolean signatureIsWrong = decodedPolicy.isSignedCorrectly() == false;
-		UploadPolicy uploadPolicy = UploadPolicy.fromDecodedPolicy(decodedPolicy);
-		
+		boolean signatureIsWrong = decodedPolicy.isSignedCorrectly() == false;		
 		if (policyNameIsWrong || signatureIsWrong){			
 			//model.put("redirectUrl", uploadPolicy.getRedirectUrl()+"?errorMessage="+ e1.getMessage());	
 			//return model;
 			throw new WebScriptException("Operation denied: policy signature is wrong");
 		}
 		
+		UploadPolicy uploadPolicy = UploadPolicy.fromDecodedPolicy(decodedPolicy);
 		if (uploadPolicy.isExpired()){		
 			//model.put("redirectUrl", uploadPolicy.getRedirectUrl()+"?errorMessage="+ e1.getMessage());	
 			//return model;

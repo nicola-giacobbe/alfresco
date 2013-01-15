@@ -54,7 +54,7 @@ public class DownloadPolicy extends Policy {
 		}
 		  
 		Date expiresAt = date;
-
+		
 		String tagVersion = decodedPolicy.getValues().get("TagVersion");
 				
 		return new DownloadPolicy(filePath,expiresAt,tagVersion);
