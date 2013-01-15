@@ -22,7 +22,6 @@ import org.springframework.extensions.webscripts.WebScriptResponse;
 import tsm.updownbacked.model.DecodedPolicy;
 import tsm.updownbacked.model.DownloadPolicy;
 import tsm.updownbacked.model.Policy;
-import tsm.updownbacked.utility.PolicyGenerator;
 import tsm.updownbacked.utility.Utility;
 
 public class DownloadGetController extends AbstractWebScript{
@@ -76,6 +75,7 @@ public class DownloadGetController extends AbstractWebScript{
 			
 			StoreRef workspaceStoreRef = new StoreRef("workspace://SpacesStore");
 			StoreRef archiveStoreRef = new StoreRef("archive://SpacesStore");
+			String queryString = "@cm\\:author:"+(char)34+tagVersionPrefix+downloadPolicy.getTagVersion()+Utility.urlSafeBase64Encode(filePath)+(char)34+"AND@cm\\:name:"+(char)34+fileName+(char)34;
 			
 			//At the moment, there can only be one store set for the search: NEED TO DO TWO SEARCH	
 			//SEARCH in workspace(header version are here)
@@ -83,8 +83,7 @@ public class DownloadGetController extends AbstractWebScript{
 			SearchParameters sp = new SearchParameters();
 			sp.addStore(workspaceStoreRef);
 	        sp.setLanguage(SearchService.LANGUAGE_LUCENE);
-	        String queryStringWorkspace = "@cm\\:author:"+(char)34+tagVersionPrefix+downloadPolicy.getTagVersion()+Utility.urlSafeBase64Encode(filePath)+(char)34+"AND@cm\\:name:"+(char)34+fileName+(char)34;
-	        sp.setQuery(queryStringWorkspace);
+	        sp.setQuery(queryString);
 	        ResultSet resultsWorkSpace = null;
 	        resultsWorkSpace = serviceRegistry.getSearchService().query(sp);
 	        for(ResultSetRow row : resultsWorkSpace){
@@ -96,8 +95,7 @@ public class DownloadGetController extends AbstractWebScript{
 	        SearchParameters spArchive = new SearchParameters();
 	        spArchive.addStore(archiveStoreRef);
 	        spArchive.setLanguage(SearchService.LANGUAGE_LUCENE);
-	        String queryStringArchive = "@cm\\:author:"+(char)34+tagVersionPrefix+downloadPolicy.getTagVersion()+Utility.urlSafeBase64Encode(filePath)+(char)34+"AND@cm\\:name:"+(char)34+fileName+(char)34;
-	        spArchive.setQuery(queryStringArchive);
+	        spArchive.setQuery(queryString);
 	        ResultSet resultsArchive = null;
 	        resultsArchive = serviceRegistry.getSearchService().query(spArchive);
 	        
