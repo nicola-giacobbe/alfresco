@@ -125,7 +125,8 @@ public class UploadPostController extends DeclarativeWebScript{
 	            		}
 
             			addTagVersionProperty(uploadPolicy, filePath,fileInfo.getNodeRef(), nodeService);        		
-	            		nodeService.addAspect(fileInfo.getNodeRef(), ContentModel.ASPECT_VERSIONABLE,null);             		                    
+	            		
+            			nodeService.addAspect(fileInfo.getNodeRef(), ContentModel.ASPECT_VERSIONABLE,null);             		                    
 	            		//Obtaining contentwriter for new nodeRef
 	                    writer = this.serviceRegistry.getFileFolderService().getWriter(fileInfo.getNodeRef());                                        
          
@@ -134,8 +135,7 @@ public class UploadPostController extends DeclarativeWebScript{
             		writer.setMimetype(Utility.guessContentType(fileName));
 					//getting ByteArrayOutputStream from InputStream
 					byte[] data = getByteArrayOutputFromContent(uploadPolicy,content);                   
-					writer.putContent(new ByteArrayInputStream(data));
-        		
+					writer.putContent(new ByteArrayInputStream(data));				
 						
                     try {						
                     	model.put("redirectUrl", uploadPolicy.getRedirectUrl()+"?path=" + URLEncoder.encode(uploadPolicy.getFilePath(), "UTF-8"));					        

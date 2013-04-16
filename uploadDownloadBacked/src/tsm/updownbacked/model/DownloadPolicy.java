@@ -10,19 +10,22 @@ import java.util.TreeMap;
 public class DownloadPolicy extends Policy {
 
 	private String filePath;
+	private String thumbnailRequired;
 	
-	public DownloadPolicy(String filePath, Date expiresAt,String tagVersion){
+	public DownloadPolicy(String filePath, Date expiresAt,String tagVersion,String thumbnailRequired){
 		
 		this.expiresAt=expiresAt;
 		this.filePath = filePath;
 		this.tagVersion = tagVersion;
+		this.thumbnailRequired = thumbnailRequired;
 	}
 	
-	public DownloadPolicy(String filePath,String tagVersion ){
+	public DownloadPolicy(String filePath,String tagVersion,String thumbnailRequired ){
 		
 		super();
 		this.filePath = filePath;
 		this.tagVersion = tagVersion;
+		this.thumbnailRequired = thumbnailRequired;
 	}
 	
 	@Override
@@ -31,7 +34,8 @@ public class DownloadPolicy extends Policy {
 		TreeMap values = new TreeMap<String, Object>();
 		values.put("FilePath", filePath);
 		values.put("ExpiresAt", expiresAt);
-		values.put("TagVersion", tagVersion);
+		if(!tagVersion.isEmpty()) values.put("TagVersion", tagVersion);
+		values.put("thumbnailRequired", thumbnailRequired);
 		return getSignedEncodedPolicy(secretKey, "DownloadPolicy", values);
 	}
 
@@ -56,8 +60,10 @@ public class DownloadPolicy extends Policy {
 		Date expiresAt = date;
 		
 		String tagVersion = decodedPolicy.getValues().get("TagVersion");
+
+		String thumbnailRequired = decodedPolicy.getValues().get("thumbnailRequired");
 				
-		return new DownloadPolicy(filePath,expiresAt,tagVersion);
+		return new DownloadPolicy(filePath,expiresAt,tagVersion,thumbnailRequired);
 	}
 
 	public String getFilePath() {
@@ -66,6 +72,20 @@ public class DownloadPolicy extends Policy {
 
 	public void setFilePath(String filePath) {
 		this.filePath = filePath;
+	}
+
+	public String getThumbnailRequired() {
+		return thumbnailRequired;
+	}
+
+	public void setThumbnailRequired(String thumbnailRequired) {
+		this.thumbnailRequired = thumbnailRequired;
+	}
+	
+	public boolean isThumbnailRequired(){
+		
+		return Boolean.parseBoolean(thumbnailRequired);
+		
 	}
 	
 }

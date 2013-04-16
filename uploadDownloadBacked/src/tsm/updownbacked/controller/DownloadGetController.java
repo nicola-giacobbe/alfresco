@@ -1,7 +1,9 @@
 package tsm.updownbacked.controller;
 
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import javax.imageio.ImageIO;
 import java.util.Arrays;
 import java.util.LinkedList;
 import org.alfresco.repo.model.Repository;
@@ -22,13 +24,18 @@ import org.springframework.extensions.webscripts.WebScriptResponse;
 import tsm.updownbacked.model.DecodedPolicy;
 import tsm.updownbacked.model.DownloadPolicy;
 import tsm.updownbacked.model.Policy;
+import tsm.updownbacked.utility.PolicyGenerator;
+import tsm.updownbacked.utility.ThumbnailGenerator;
 import tsm.updownbacked.utility.Utility;
 
 public class DownloadGetController extends AbstractWebScript{
 	 
 	private String key = "Dh_s0uzo1walbqnsScJJQy|ffs";
 	private final static String DOWNLOAD_POLICY_NAME= "DownloadPolicy";
- 	private final static String tagVersionPrefix= "TSM_TAG_VERSION"; 
+ 	private final static String TAG_VERSION_PREFIX= "TSM_TAG_VERSION";
+ 	private final static String POLICY_PARAMETER="policy";
+ 	private final static String WORKSPACE_STORE_REF="workspace://SpacesStore";
+ 	private final static String ARCHIVE_STORE_REF="archive://SpacesStore";
 
     private Repository repository;
 	
@@ -45,15 +52,16 @@ public class DownloadGetController extends AbstractWebScript{
 	@Override
 	public void execute(WebScriptRequest req, WebScriptResponse res)throws IOException {
 
+
 		ContentReader reader =null;
-		/*PolicyGenerator policyGenerator = new PolicyGenerator(key);
-		String encodedUploadPolicy = policyGenerator.getEncodedDownloadPolicyParam("BA/BI/pet.txt", "2");		
-		DecodedPolicy decodedPolicy = Policy.decodePolicy(key,encodedUploadPolicy);*/
+		PolicyGenerator policyGenerator = new PolicyGenerator(key);
+		String encodedUploadPolicy = policyGenerator.getEncodedDownloadPolicyParam("BA/BI/Blue_Dock_by_dimage.jpg", "","true");		
+		DecodedPolicy decodedPolicy = Policy.decodePolicy(key,encodedUploadPolicy);
 		
-	    DecodedPolicy decodedPolicy = Policy.decodePolicy(key,req.getParameter("policy"));
+	    //DecodedPolicy decodedPolicy = Policy.decodePolicy(key,req.getParameter(POLICY_PARAMETER));
 		boolean policyNameIsWrong = !decodedPolicy.getPolicyName().equals(DOWNLOAD_POLICY_NAME);
 		boolean signatureIsWrong = decodedPolicy.isSignedCorrectly() == false;
-	
+		
 		if (policyNameIsWrong || signatureIsWrong){
 			
 			throw new WebScriptException("Operation denied: policy signature is wrong");
@@ -73,9 +81,9 @@ public class DownloadGetController extends AbstractWebScript{
 		//Take the node base on the TargetVersion
 		if(null!=downloadPolicy.getTagVersion() && !downloadPolicy.getTagVersion().isEmpty()){
 			
-			StoreRef workspaceStoreRef = new StoreRef("workspace://SpacesStore");
-			StoreRef archiveStoreRef = new StoreRef("archive://SpacesStore");
-			String queryString = "@cm\\:author:"+(char)34+tagVersionPrefix+downloadPolicy.getTagVersion()+Utility.urlSafeBase64Encode(filePath)+(char)34+"AND@cm\\:name:"+(char)34+fileName+(char)34;
+			StoreRef workspaceStoreRef = new StoreRef(WORKSPACE_STORE_REF);
+			StoreRef archiveStoreRef = new StoreRef(ARCHIVE_STORE_REF);
+			String queryString = "@cm\\:author:"+(char)34+TAG_VERSION_PREFIX+downloadPolicy.getTagVersion()+Utility.urlSafeBase64Encode(filePath)+(char)34+"AND@cm\\:name:"+(char)34+fileName+(char)34;
 			
 			//At the moment, there can only be one store set for the search: NEED TO DO TWO SEARCH	
 			//SEARCH in workspace(header version are here)
@@ -106,8 +114,7 @@ public class DownloadGetController extends AbstractWebScript{
 	        if(targetNodeRef==null){
 				throw new WebScriptException("Unable to find the target version node");
 	        }
-	        System.out.println("size resultsArchive"+resultsArchive.length());
-	        
+	        System.out.println("size resultsArchive"+resultsArchive.length());	        
 			reader = this.serviceRegistry.getFileFolderService().getReader(targetNodeRef);	
 		
 		//Take header version if no targetVersion is not provided
@@ -118,8 +125,21 @@ public class DownloadGetController extends AbstractWebScript{
 		}
 		
 		try {				
-			reader.getContent(res.getOutputStream());
-			reader.setMimetype(Utility.guessContentType(fileName));
+			
+			if(downloadPolicy.isThumbnailRequired() && Utility.isImageContentType(fileName)){	
+				
+				BufferedImage buffImg = ThumbnailGenerator.createThumbnail(reader.getContentInputStream());
+				res.setContentType(Utility.guessContentType(fileName));
+				res.addHeader("Content-Disposition", "attachment; filename=" + fileName);
+				ImageIO.write(buffImg, "jpg", res.getOutputStream());		
+				
+			}else{			
+				
+				reader.getContent(res.getOutputStream());
+				reader.setMimetype(Utility.guessContentType(fileName));		
+				res.addHeader("Content-Disposition", "attachment; filename=" + fileName);
+			}
+		
 		} catch (Exception ex) {
 			//ex.printStackTrace();
 			WebScriptException ex2 = new WebScriptException("Unable to stream output");

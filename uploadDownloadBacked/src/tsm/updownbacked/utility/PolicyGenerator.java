@@ -19,9 +19,9 @@ public class PolicyGenerator {
 		return policyParam;
 	}
 	
-	public String getEncodedDownloadPolicyParam(String filePath,String tagVersion){
+	public String getEncodedDownloadPolicyParam(String filePath,String tagVersion, String thumbnailRequired){
 		
-		DownloadPolicy policy = new DownloadPolicy(filePath,tagVersion);
+		DownloadPolicy policy = new DownloadPolicy(filePath,tagVersion,thumbnailRequired);
 		String policyParam = policy.getSignedEncodedPolicy(secretKey);
 		return policyParam;
 	}

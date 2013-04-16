@@ -94,7 +94,23 @@ public class Utility {
 		return "application/octet-stream";
 
     }
-	
+
+	public static boolean isImageContentType(String filePath){
+		
+		boolean isImageExtension = false;
+		String extension = "";
+
+		int i = filePath.lastIndexOf('.');
+		if (i > 0) {
+		    extension = filePath.substring(i).toLowerCase();
+		}
+		
+		if(extension.equals(".jpeg") || extension.equals(".jpg") || extension.equals(".gif") || extension.equals(".png")){
+			return true;
+		}
+		return isImageExtension;
+
+    }
 	
     public static NodeRef getFolderStructure(NodeRef parent,String filePath,ServiceRegistry servRegistry)throws InvalidArgumentException{
 		
