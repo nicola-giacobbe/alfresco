@@ -10,7 +10,7 @@ import tsm.updownbacked.utility.PolicyGenerator;
 public class UploadGetController extends DeclarativeWebScript{
 	 
  	private String secretKey = "Dh_s0uzo1walbqnsScJJQy|ffs";
-	
+	 
  	@Override
  	protected Map<String, Object> executeImpl(WebScriptRequest req, Status status, Cache cache){
  		
@@ -19,7 +19,7 @@ public class UploadGetController extends DeclarativeWebScript{
  		//maximumSizeInMB=25,ExpiresAt=30min	
  		//String encodedUploadPolicy = policyGenerator.getEncodedUploadedPolicyParam(25,"path.txt","www.wiki.alfresco.com/wiki/Main_Page");
 
- 		String encodedUploadPolicy = policyGenerator.getEncodedUploadedPolicyParam(25,"BANG/BuNG/path.txt","http://brugbart.com");
+ 		String encodedUploadPolicy = policyGenerator.getEncodedUploadedPolicyParam(25,"BA/BI/pet.txt","http://brugbart.com","4");
  	    model.put("policy", encodedUploadPolicy);
  	    return model;
  	}

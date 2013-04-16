@@ -1,7 +1,9 @@
 package tsm.updownbacked.controller;
 
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import javax.imageio.ImageIO;
 import java.util.Arrays;
 import java.util.LinkedList;
 import org.alfresco.repo.model.Repository;
@@ -10,6 +12,11 @@ import org.alfresco.service.cmr.model.FileInfo;
 import org.alfresco.service.cmr.model.FileNotFoundException;
 import org.alfresco.service.cmr.repository.ContentReader;
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.cmr.repository.StoreRef;
+import org.alfresco.service.cmr.search.ResultSet;
+import org.alfresco.service.cmr.search.ResultSetRow;
+import org.alfresco.service.cmr.search.SearchParameters;
+import org.alfresco.service.cmr.search.SearchService;
 import org.springframework.extensions.webscripts.AbstractWebScript;
 import org.springframework.extensions.webscripts.WebScriptException;
 import org.springframework.extensions.webscripts.WebScriptRequest;
@@ -17,13 +24,18 @@ import org.springframework.extensions.webscripts.WebScriptResponse;
 import tsm.updownbacked.model.DecodedPolicy;
 import tsm.updownbacked.model.DownloadPolicy;
 import tsm.updownbacked.model.Policy;
+import tsm.updownbacked.utility.PolicyGenerator;
+import tsm.updownbacked.utility.ThumbnailGenerator;
 import tsm.updownbacked.utility.Utility;
 
 public class DownloadGetController extends AbstractWebScript{
 	 
 	private String key = "Dh_s0uzo1walbqnsScJJQy|ffs";
-
 	private final static String DOWNLOAD_POLICY_NAME= "DownloadPolicy";
+ 	private final static String TAG_VERSION_PREFIX= "TSM_TAG_VERSION";
+ 	private final static String POLICY_PARAMETER="policy";
+ 	private final static String WORKSPACE_STORE_REF="workspace://SpacesStore";
+ 	private final static String ARCHIVE_STORE_REF="archive://SpacesStore";
 
     private Repository repository;
 	
@@ -40,10 +52,16 @@ public class DownloadGetController extends AbstractWebScript{
 	@Override
 	public void execute(WebScriptRequest req, WebScriptResponse res)throws IOException {
 
-		DecodedPolicy decodedPolicy = Policy.decodePolicy(key,req.getParameter("policy"));
+
+		ContentReader reader =null;
+		PolicyGenerator policyGenerator = new PolicyGenerator(key);
+		String encodedUploadPolicy = policyGenerator.getEncodedDownloadPolicyParam("BA/BI/Blue_Dock_by_dimage.jpg", "","true");		
+		DecodedPolicy decodedPolicy = Policy.decodePolicy(key,encodedUploadPolicy);
+		
+	    //DecodedPolicy decodedPolicy = Policy.decodePolicy(key,req.getParameter(POLICY_PARAMETER));
 		boolean policyNameIsWrong = !decodedPolicy.getPolicyName().equals(DOWNLOAD_POLICY_NAME);
 		boolean signatureIsWrong = decodedPolicy.isSignedCorrectly() == false;
-	
+		
 		if (policyNameIsWrong || signatureIsWrong){
 			
 			throw new WebScriptException("Operation denied: policy signature is wrong");
@@ -59,12 +77,69 @@ public class DownloadGetController extends AbstractWebScript{
 		if(companyHome==null){
 			throw new WebScriptException("Unable to find the company home node");
 		}
-		FileInfo fileInfo = searchFileDirectory(filePath, companyHome);	
 		
-		try {	
-			ContentReader reader = this.serviceRegistry.getFileFolderService().getReader(fileInfo.getNodeRef());
-			reader.getContent(res.getOutputStream());
-			reader.setMimetype(Utility.guessContentType(fileName));
+		//Take the node base on the TargetVersion
+		if(null!=downloadPolicy.getTagVersion() && !downloadPolicy.getTagVersion().isEmpty()){
+			
+			StoreRef workspaceStoreRef = new StoreRef(WORKSPACE_STORE_REF);
+			StoreRef archiveStoreRef = new StoreRef(ARCHIVE_STORE_REF);
+			String queryString = "@cm\\:author:"+(char)34+TAG_VERSION_PREFIX+downloadPolicy.getTagVersion()+Utility.urlSafeBase64Encode(filePath)+(char)34+"AND@cm\\:name:"+(char)34+fileName+(char)34;
+			
+			//At the moment, there can only be one store set for the search: NEED TO DO TWO SEARCH	
+			//SEARCH in workspace(header version are here)
+			NodeRef targetNodeRef = null;
+			SearchParameters sp = new SearchParameters();
+			sp.addStore(workspaceStoreRef);
+	        sp.setLanguage(SearchService.LANGUAGE_LUCENE);
+	        sp.setQuery(queryString);
+	        ResultSet resultsWorkSpace = null;
+	        resultsWorkSpace = serviceRegistry.getSearchService().query(sp);
+	        for(ResultSetRow row : resultsWorkSpace){
+	            targetNodeRef = row.getNodeRef();	           
+	        }
+	        System.out.println("size resultsWorkSpace"+resultsWorkSpace.length());
+	        	        
+	        //SEARCH in archive(not header version are here as archived nodes)
+	        SearchParameters spArchive = new SearchParameters();
+	        spArchive.addStore(archiveStoreRef);
+	        spArchive.setLanguage(SearchService.LANGUAGE_LUCENE);
+	        spArchive.setQuery(queryString);
+	        ResultSet resultsArchive = null;
+	        resultsArchive = serviceRegistry.getSearchService().query(spArchive);
+	        
+	        for(ResultSetRow row : resultsArchive){
+	            targetNodeRef = row.getNodeRef();	           
+	        }
+	        
+	        if(targetNodeRef==null){
+				throw new WebScriptException("Unable to find the target version node");
+	        }
+	        System.out.println("size resultsArchive"+resultsArchive.length());	        
+			reader = this.serviceRegistry.getFileFolderService().getReader(targetNodeRef);	
+		
+		//Take header version if no targetVersion is not provided
+		}else{
+			
+			FileInfo fileInfo = searchFileInfoByFilePath(filePath, companyHome);	
+			reader = this.serviceRegistry.getFileFolderService().getReader(fileInfo.getNodeRef());		
+		}
+		
+		try {				
+			
+			if(downloadPolicy.isThumbnailRequired() && Utility.isImageContentType(fileName)){	
+				
+				BufferedImage buffImg = ThumbnailGenerator.createThumbnail(reader.getContentInputStream());
+				res.setContentType(Utility.guessContentType(fileName));
+				res.addHeader("Content-Disposition", "attachment; filename=" + fileName);
+				ImageIO.write(buffImg, "jpg", res.getOutputStream());		
+				
+			}else{			
+				
+				reader.getContent(res.getOutputStream());
+				reader.setMimetype(Utility.guessContentType(fileName));		
+				res.addHeader("Content-Disposition", "attachment; filename=" + fileName);
+			}
+		
 		} catch (Exception ex) {
 			//ex.printStackTrace();
 			WebScriptException ex2 = new WebScriptException("Unable to stream output");
@@ -74,7 +149,7 @@ public class DownloadGetController extends AbstractWebScript{
 	        
 	}
 
-	private FileInfo searchFileDirectory(String filePath, NodeRef companyHome) {
+	private FileInfo searchFileInfoByFilePath(String filePath, NodeRef companyHome) {
 		
 		LinkedList<String> folderList = new LinkedList<String>();
 		if(filePath.contains("/")){
@@ -86,7 +161,7 @@ public class DownloadGetController extends AbstractWebScript{
 		try {
 		
 			fileInfo = this.serviceRegistry.getFileFolderService().resolveNamePath(companyHome, folderList);
-
+		
 		} catch (FileNotFoundException e) {
 			
 			e.printStackTrace();

@@ -15,6 +15,7 @@ import tsm.updownbacked.utility.Utility;
 public abstract class Policy {
 
 	protected Date expiresAt;
+	protected String tagVersion;
 	
 	protected Policy(){
 		 
@@ -32,6 +33,14 @@ public abstract class Policy {
 
 	public void setExpiresAt(Date expiresAt) {
 		this.expiresAt = expiresAt;
+	}
+	
+	public String getTagVersion() {
+		return tagVersion;
+	}
+
+	public void setTagVersion(String tagVersion) {
+		this.tagVersion = tagVersion;
 	}
 	
 	public boolean isExpired(){

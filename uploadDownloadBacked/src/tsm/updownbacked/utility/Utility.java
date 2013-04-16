@@ -95,25 +95,24 @@ public class Utility {
 
     }
 
-    public static void checkExistentFile(NodeRef companyHome, String fileName,NodeRef nodeRefDestinationFolder,ServiceRegistry servRegistry) {
+	public static boolean isImageContentType(String filePath){
 		
-		NodeRef nodeRefDestinationFile = null;
-		
-		if(null==nodeRefDestinationFolder){		
-			//Search for nodeRef with that filename under Company Home             
-		    nodeRefDestinationFile = servRegistry.getFileFolderService().searchSimple(companyHome,fileName);
-		}else{
-			nodeRefDestinationFile = servRegistry.getFileFolderService().searchSimple(nodeRefDestinationFolder,fileName);
+		boolean isImageExtension = false;
+		String extension = "";
+
+		int i = filePath.lastIndexOf('.');
+		if (i > 0) {
+		    extension = filePath.substring(i).toLowerCase();
 		}
 		
-		//If nodeRef exists for the same filename delete nodeRef 
-		if(null!=nodeRefDestinationFile){
-			servRegistry.getFileFolderService().delete(nodeRefDestinationFile);
+		if(extension.equals(".jpeg") || extension.equals(".jpg") || extension.equals(".gif") || extension.equals(".png")){
+			return true;
 		}
-	}
+		return isImageExtension;
+
+    }
 	
-	
-    public static NodeRef createFolderStructure(NodeRef parent,String filePath,ServiceRegistry servRegistry)throws InvalidArgumentException{
+    public static NodeRef getFolderStructure(NodeRef parent,String filePath,ServiceRegistry servRegistry)throws InvalidArgumentException{
 		
 		NodeRef nodeRefDestinationFolder = null;
 		

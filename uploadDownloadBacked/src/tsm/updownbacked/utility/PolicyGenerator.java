@@ -12,16 +12,16 @@ public class PolicyGenerator {
 		this.secretKey=secretKey;
 	} 
 	
-	public String getEncodedUploadedPolicyParam(int maximumSizeInMB,String filePath,String redirectUrl){
+	public String getEncodedUploadedPolicyParam(int maximumSizeInMB,String filePath,String redirectUrl,String tagVersion){
 		
-		UploadPolicy policy = new UploadPolicy (maximumSizeInMB,filePath,redirectUrl);
+		UploadPolicy policy = new UploadPolicy (maximumSizeInMB,filePath,redirectUrl,tagVersion);
 		String policyParam = policy.getSignedEncodedPolicy(secretKey);
 		return policyParam;
 	}
 	
-	public String getEncodedDownloadPolicyParam(String filePath){
+	public String getEncodedDownloadPolicyParam(String filePath,String tagVersion, String thumbnailRequired){
 		
-		DownloadPolicy policy = new DownloadPolicy(filePath);
+		DownloadPolicy policy = new DownloadPolicy(filePath,tagVersion,thumbnailRequired);
 		String policyParam = policy.getSignedEncodedPolicy(secretKey);
 		return policyParam;
 	}

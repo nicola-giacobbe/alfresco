@@ -22,12 +22,13 @@ public class UploadPolicy extends Policy {
 		this.expiresAt = expiresAt;
 	}
 	
-	public UploadPolicy(int maximumSizeInMB,Date expiresAt,String filePath,String redirectUrl){
+	public UploadPolicy(int maximumSizeInMB,Date expiresAt,String filePath,String redirectUrl,String tagVersion){
 		
 		this.maximumSizeInMB = maximumSizeInMB;
 		this.expiresAt = expiresAt;
 		this.filePath = filePath;
 		this.redirectUrl = redirectUrl;
+		this.tagVersion = tagVersion;
 	}
 	
 	public UploadPolicy(int maximumSizeInMB){
@@ -35,11 +36,12 @@ public class UploadPolicy extends Policy {
 		this.maximumSizeInMB = maximumSizeInMB;
 	}
 	
-	public UploadPolicy(int maximumSizeInMB,String filePath,String redirectUrl){
+	public UploadPolicy(int maximumSizeInMB,String filePath,String redirectUrl,String tagVersion){
 		super();
 		this.maximumSizeInMB = maximumSizeInMB;
 		this.filePath = filePath;
 		this.redirectUrl = redirectUrl;
+		this.tagVersion = tagVersion;
 	}
 	
 	public String getSignedEncodedPolicy(String secretKey){
@@ -49,6 +51,7 @@ public class UploadPolicy extends Policy {
 		values.put("FilePath", filePath);
 		values.put("RedirectUrl", redirectUrl);
 		values.put("ExpiresAt", expiresAt);
+		values.put("TagVersion", tagVersion);
 		
 
 		return getSignedEncodedPolicy(secretKey, "UploadPolicy", values);
@@ -74,8 +77,9 @@ public class UploadPolicy extends Policy {
 		
 		String filePath = decodedPolicy.getValues().get("FilePath");
 		String redirectUrl = decodedPolicy.getValues().get("RedirectUrl");
+		String tagVersion = decodedPolicy.getValues().get("TagVersion");
 					
-		return new UploadPolicy(maximumSizeInMB,expiresAt,filePath,redirectUrl);
+		return new UploadPolicy(maximumSizeInMB,expiresAt,filePath,redirectUrl,tagVersion);
 	}
 	
 	public int getMaximumSizeInMB() {
